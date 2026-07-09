@@ -76,6 +76,6 @@ elif page == "Risk Predictor":
                 
         st.markdown("---")
         st.subheader(f"Predicted Outcome: **{status_mapping[prediction_class]}**")
-        st.write(f"📉 Probability of Dropping Out: **{probabilities[0]*100:.2f}%**")
-        st.write(f"⏳ Probability of Staying Enrolled: **{probabilities[1]*100:.2f}%**")
-        st.write(f"🎓 Probability of Graduating: **{probabilities[2]*100:.2f}%**")
+        st.write(f"Probability of Dropping Out: **{probabilities[0]*100:.2f}%**")
+        st.write(f"Probability of Staying Enrolled: **{probabilities[1]*100:.2f}%**")
+        st.write(f"Probability of Graduating: **{probabilities[2]*100:.2f}%**")
