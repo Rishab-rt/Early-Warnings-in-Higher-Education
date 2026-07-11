@@ -45,7 +45,7 @@ if page == "Data Overview":
         sns.countplot(data=df, x='Debtor', hue='Target', ax=ax2, palette='Set1')
         ax2.set_title("Dropout Rates: Debtors vs Non-Debtors ")
         ax2.set_xlabel("Is the Student a Debtor?")
-        ax2.set_xticklabels(["Debtor", "Not a Debtor"])
+        ax2.set_xticklabels(["Not a Debtor", "Debtor"])
         st.pyplot(fig2)
         
 elif page == "Risk Predictor":

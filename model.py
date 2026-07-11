@@ -49,9 +49,6 @@ def train_models(X_train, X_test, y_train, y_test):
             joblib.dump(model, 'decision_tree_model.pkl')
         
     print("\nAll models trained and files saved successfully!")
-    
-    joblib.dump(model, 'logistic_model.pkl')
-    joblib.dump(scaler, 'scaler.pkl')
     print("Model and Scaler successfully saved!")
 
 if __name__ == "__main__":
