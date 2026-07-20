@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated evaluation figures
+plots/
+
+# Trained model artifacts (regenerable via model.py)
+*.pkl
