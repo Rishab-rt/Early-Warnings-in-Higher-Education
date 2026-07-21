@@ -1,19 +1,16 @@
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report, accuracy_score
 import joblib
+from data_quality import TARGET_COLUMN, load_clean_data, print_audit_report
 
 def load():
-    df = pd.read_csv('data/data.csv', sep=';')
+    df, _ = load_clean_data(map_target=True)
 
-    target_map = {'Dropout': 0, 'Enrolled': 1, 'Graduate': 2}
-    df['Target'] = df['Target'].map(target_map)
-
-    X = df.drop(columns=['Target'])
-    y = df['Target']
+    X = df.drop(columns=[TARGET_COLUMN])
+    y = df[TARGET_COLUMN]
     
     return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
@@ -52,5 +49,7 @@ def train_models(X_train, X_test, y_train, y_test):
     print("Model and Scaler successfully saved!")
 
 if __name__ == "__main__":
+    _, audit_details = load_clean_data()
+    print_audit_report(audit_details)
     X_train, X_test, y_train, y_test = load()
     train_models(X_train, X_test, y_train, y_test)
