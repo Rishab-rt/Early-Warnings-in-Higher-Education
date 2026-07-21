@@ -20,13 +20,21 @@ pip install -r requirements.txt
    python model.py
    ```
 
-2. **Evaluate** — prints classification reports and writes confusion matrix + SHAP plots to `plots/`:
+2. **Audit and clean the data** - checks column names, missing values, duplicates, invalid targets, numeric feature types, and class imbalance:
+
+   ```bash
+   python audit_data.py
+   ```
+
+   `model.py` also runs the same cleaning step before training so the models use the audited dataset.
+
+3. **Evaluate** - prints classification reports and writes confusion matrix + SHAP plots to `plots/`:
 
    ```bash
    python evaluate.py
    ```
 
-3. **Launch the app** — EDA dashboard and interactive risk predictor:
+4. **Launch the app** - EDA dashboard, data audit dashboard, and interactive risk predictor:
 
    ```bash
    streamlit run app.py
