@@ -15,7 +15,7 @@ def get_data():
 
 
 df, audit_details = get_data()
-page = st.sidebar.selectbox("Navigate", ["Data Overview", "Data Audit", "Risk Predictor"])
+page = st.sidebar.selectbox("Navigate", ["Data Overview", "Data Audit", "Risk Predictor", "Model Evaluation"])
     
 if page == "Data Overview":
         st.header("Exploratory Data Analysis (EDA)")
@@ -149,3 +149,46 @@ elif page == "Risk Predictor":
         st.write(f"Probability of Dropping Out: **{probabilities[0]*100:.2f}%**")
         st.write(f"Probability of Staying Enrolled: **{probabilities[1]*100:.2f}%**")
         st.write(f"Probability of Graduating: **{probabilities[2]*100:.2f}%**")
+
+elif page == "Model Evaluation":
+    st.header("Understanding the Model's Decisions")
+    st.write("We use machine learning to predict student outcomes, but we also want to understand why the model makes those predictions. Below is a breakdown of how accurate the model is and which factors matter most.")
+    
+    # Create two columns for side-by-side comparison
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Full Student Profile")
+        st.write("This evaluates all available data for a student.")
+        
+        st.markdown("### 1. What impacts a student's success?")
+        st.write("This chart shows which factors have the biggest influence on a student dropping out or graduating. Factors at the top are the most important. (Curricular units - classes/credits).")
+        try:
+            st.image("plots/shap_importance_logistic_regression.png", width="stretch")
+        except Exception:
+            st.warning("Chart not found.")
+            
+        st.markdown("### 2. How accurate are these predictions?")
+        st.write("This 'scorecard' shows how often the model guessed correctly.")
+        try:
+            st.image("plots/confusion_matrix_logistic_regression_normalized.png", width="stretch")
+        except Exception:
+            st.warning("Chart not found.")
+            
+    with col2:
+        st.subheader("Early Warning System")
+        st.write("This only looks at 1st-semester data to catch at-risk students early.")
+        
+        st.markdown("### 1. What early signs matter most?")
+        st.write("Similar to the chart on the left, but this only weighs the factors we know during a student's first few months on campus.")
+        try:
+            st.image("plots/shap_importance_early_warning.png", width="stretch")
+        except Exception:
+            st.warning("Chart not found.")
+            
+        st.markdown("### 2. Early Warning Accuracy")
+        st.write(" This shows how accurate the model is when it only has 1st-semester data to work with.")
+        try:
+            st.image("plots/confusion_matrix_early_warning_normalized.png", width="stretch")
+        except Exception:
+            st.warning("Chart not found.")

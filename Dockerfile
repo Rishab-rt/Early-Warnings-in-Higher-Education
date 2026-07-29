@@ -24,6 +24,7 @@ COPY . .
 # Train models at build time so logistic_model.pkl / decision_tree_model.pkl /
 # scaler.pkl exist inside the image (they're .gitignore'd, not in the repo).
 RUN python model.py
+RUN python evaluate.py
 
 # Streamlit config
 ENV STREAMLIT_SERVER_HEADLESS=true \
