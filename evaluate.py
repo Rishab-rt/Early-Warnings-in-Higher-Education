@@ -141,7 +141,10 @@ def early_warning_analysis(X_train, X_test, y_train, y_test):
     X_train_scaled = scaler.fit_transform(X_train_e)
     X_test_scaled = scaler.transform(X_test_e)
 
-    model = LogisticRegression(max_iter=1000, random_state=42)
+    # Match the deployed model: balance class weights so the minority Enrolled
+    # class isn't sacrificed for accuracy (lifts its confusion-matrix recall).
+    model = LogisticRegression(
+        max_iter=1000, random_state=42, class_weight='balanced')
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
 
