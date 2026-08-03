@@ -128,8 +128,13 @@ def early_warning_analysis(X_train, X_test, y_train, y_test):
     """
     print("\n########## EARLY-WARNING (1st-semester-only) ##########")
 
-    early_cols = [c for c in X_train.columns if '2nd sem' not in c]
-    dropped = [c for c in X_train.columns if '2nd sem' in c]
+    # Drop anything derived from 2nd-semester data. 'grade delta' has no
+    # '2nd sem' substring but is computed from it, so exclude it explicitly.
+    def _is_second_sem(col):
+        return '2nd sem' in col or col == 'grade delta'
+
+    early_cols = [c for c in X_train.columns if not _is_second_sem(c)]
+    dropped = [c for c in X_train.columns if _is_second_sem(c)]
     print(
         f"Using {len(early_cols)} features; dropped {len(dropped)} second-semester features.")
 
@@ -141,7 +146,10 @@ def early_warning_analysis(X_train, X_test, y_train, y_test):
     X_train_scaled = scaler.fit_transform(X_train_e)
     X_test_scaled = scaler.transform(X_test_e)
 
-    model = LogisticRegression(max_iter=1000, random_state=42)
+    # Match the deployed model: balance class weights so the minority Enrolled
+    # class isn't sacrificed for accuracy (lifts its confusion-matrix recall).
+    model = LogisticRegression(
+        max_iter=1000, random_state=42, class_weight='balanced')
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
 

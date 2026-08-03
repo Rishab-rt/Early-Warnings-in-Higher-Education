@@ -19,9 +19,13 @@ def train_models(X_train, X_test, y_train, y_test):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
+    # class_weight='balanced' reweights the loss inversely to class frequency
+    # (weight = n_samples / (n_classes * class_count)), so the minority Enrolled
+    # class is no longer sacrificed to boost overall accuracy. This raises the
+    # Enrolled recall (confusion-matrix diagonal) at a small cost to accuracy.
     models = {
-    "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-    "Decision Tree": DecisionTreeClassifier(max_depth=5, random_state=42)
+    "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced'),
+    "Decision Tree": DecisionTreeClassifier(max_depth=5, random_state=42, class_weight='balanced')
     }
 
     for name, model in models.items():

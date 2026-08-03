@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -5,6 +6,21 @@ DATA_PATH = "data/data.csv"
 TARGET_COLUMN = "Target"
 TARGET_MAP = {"Dropout": 0, "Enrolled": 1, "Graduate": 2}
 CLASS_NAMES = list(TARGET_MAP.keys())
+
+# These columns store *category codes*, not quantities (e.g. Course 171 is a
+# different major than Course 17, not "10x" of it). Feeding the raw code to a
+# linear model implies a false ordering/magnitude, so we one-hot encode them.
+#
+# Only the LOW-cardinality codes are encoded. 5-fold CV showed these two lift
+# Logistic Regression from ~73.9% -> ~75.2%, while also one-hot encoding the
+# high-cardinality codes (parental occupation ~46 levels, qualifications ~30,
+# nationality ~21) explodes into hundreds of sparse columns that OVERFIT and
+# drop accuracy to ~70%. Application mode tested neutral, so it's left out.
+# Already-binary flags (Gender, Debtor, ...) and ordinal codes are left as-is.
+NOMINAL_CATEGORICAL_COLUMNS = [
+    "Marital status",
+    "Course",
+]
 
 
 def load_raw_data(path=DATA_PATH):
@@ -60,10 +76,82 @@ def clean_data(df):
             f"Filled missing numeric feature values in {len(missing_feature_columns)} column(s) with medians."
         )
 
+    cleaned, engineered = engineer_curricular_features(cleaned)
+    if engineered:
+        actions.append(
+            f"Engineered {len(engineered)} curricular-unit feature(s): {', '.join(engineered)}."
+        )
+
+    cleaned, encoded_cols, dummy_count = one_hot_encode_categoricals(cleaned)
+    if encoded_cols:
+        actions.append(
+            f"One-hot encoded {len(encoded_cols)} categorical code column(s) "
+            f"into {dummy_count} indicator column(s)."
+        )
+
     if not actions:
         actions.append("No cleaning changes were required.")
 
     return cleaned, actions
+
+
+def one_hot_encode_categoricals(df, columns=NOMINAL_CATEGORICAL_COLUMNS):
+    """Replace nominal category-code columns with 0/1 indicator columns.
+
+    A linear model reads 'Course = 171' as a large quantity; one-hot encoding
+    turns it into separate yes/no columns (Course_171, Course_17, ...) so the
+    codes are treated as unordered categories. Encoding the full dataset here
+    (before any train/test split) guarantees every consumer -- model.py,
+    evaluate.py, app.py -- sees an identical set of columns.
+
+    Returns (df, encoded_source_columns, total_indicator_columns).
+    """
+    present = [c for c in columns if c in df.columns]
+    if not present:
+        return df, [], 0
+
+    # Codes are integers; cast so dummy names read 'Course_171', not 'Course_171.0'.
+    df[present] = df[present].astype(int)
+
+    before = df.shape[1]
+    df = pd.get_dummies(df, columns=present, dtype=int)
+    dummy_count = df.shape[1] - (before - len(present))
+
+    return df, present, dummy_count
+
+
+def engineer_curricular_features(df):
+    """Derive relationship features from the per-semester curricular-unit columns.
+
+    The raw columns store enrolled/approved/grade as separate counts, but the
+    predictive signal lives in the *relationship* between them (e.g. passing 6
+    of 6 vs 6 of 12). Linear models can't recover a ratio from separate columns,
+    so we compute it explicitly. Returns (df, list_of_new_column_names).
+    """
+    engineered = []
+
+    ratio_specs = [
+        ("Curricular units 1st sem (approved)", "Curricular units 1st sem (enrolled)", "1st sem approval ratio"),
+        ("Curricular units 2nd sem (approved)", "Curricular units 2nd sem (enrolled)", "2nd sem approval ratio"),
+    ]
+    for approved_col, enrolled_col, new_col in ratio_specs:
+        if approved_col in df.columns and enrolled_col in df.columns:
+            # Guard divide-by-zero (student enrolled in nothing) -> ratio 0.
+            df[new_col] = (
+                df[approved_col] / df[enrolled_col].replace(0, np.nan)
+            ).fillna(0)
+            engineered.append(new_col)
+
+    grade_1st, grade_2nd = (
+        "Curricular units 1st sem (grade)",
+        "Curricular units 2nd sem (grade)",
+    )
+    if grade_1st in df.columns and grade_2nd in df.columns:
+        # Momentum between semesters: a sliding grade signals rising risk.
+        df["grade delta"] = df[grade_2nd] - df[grade_1st]
+        engineered.append("grade delta")
+
+    return df, engineered
 
 
 def class_imbalance_report(df):
