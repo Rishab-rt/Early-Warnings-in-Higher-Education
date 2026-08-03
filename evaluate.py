@@ -128,8 +128,13 @@ def early_warning_analysis(X_train, X_test, y_train, y_test):
     """
     print("\n########## EARLY-WARNING (1st-semester-only) ##########")
 
-    early_cols = [c for c in X_train.columns if '2nd sem' not in c]
-    dropped = [c for c in X_train.columns if '2nd sem' in c]
+    # Drop anything derived from 2nd-semester data. 'grade delta' has no
+    # '2nd sem' substring but is computed from it, so exclude it explicitly.
+    def _is_second_sem(col):
+        return '2nd sem' in col or col == 'grade delta'
+
+    early_cols = [c for c in X_train.columns if not _is_second_sem(c)]
+    dropped = [c for c in X_train.columns if _is_second_sem(c)]
     print(
         f"Using {len(early_cols)} features; dropped {len(dropped)} second-semester features.")
 
